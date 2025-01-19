@@ -10,22 +10,18 @@ terraform {
       version = ">= 3.5.0, < 4.0.0"
     }
   }
-  backend "azurerm" {
-    resource_group_name  = “tfstate-gademo-rg”
-    storage_account_name = "tfstategademo"
-    container_name       = "tfstate"
-    key                  = "tfdemo.ga.tfstate"
-  }
 }
+
 provider "azurerm" {
   features {}
-  subscription_id = "4fa49e95-105d-4e89-9a5c-78f291ef04e7"
 }
+
 # This ensures we have unique CAF compliant names for our resources.
 module "naming" {
   source  = "Azure/naming/azurerm"
   version = "0.3.0"
 }
+
 locals {
   azure_regions = [
     "ukwest",
@@ -35,26 +31,32 @@ locals {
     # Add other regions as needed
   ]
 }
+
 variable "enable_telemetry" {
   description = "Enable or disable telemetry for the log analytics workspace"
   type        = bool
   default     = true # Set a default value if desired
 }
+
+
 # This picks a random region from the list of regions.
 resource "random_integer" "region_index" {
   max = length(local.azure_regions) - 1
   min = 0
 }
+
 # Add a new random_pet resource to generate a unique, human-readable name
 resource "random_pet" "log_analytics_workspace_name" {
   length    = 2
   separator = "-"
 }
+
 # This is required for resource modules
 resource "azurerm_resource_group" "rg" {
   location = local.azure_regions[random_integer.region_index.result]
   name     = module.naming.resource_group.name_unique
 }
+
 # This is the module call
 module "log_analytics_workspace" {
   source = "Azure/avm-res-operationalinsights-workspace/azurerm"
